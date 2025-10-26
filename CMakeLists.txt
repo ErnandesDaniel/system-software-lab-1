@@ -3,4 +3,4 @@ project(system-software-lab-1 C)
 
 set(CMAKE_C_STANDARD 17)
 
-add_executable(system-software-lab-1 main.c parser.c)
+add_executable(system-software-lab-1 main.c)

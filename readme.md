@@ -3,3 +3,5 @@ clang-format -i main.c
 
 Запуск генерации грамматики:
 npx tree-sitter generate
+
+src- исходники парсера
