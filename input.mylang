@@ -1,3 +1,2 @@
-def main()
-    42;
-end
+
+def main () end
