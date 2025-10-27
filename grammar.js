@@ -61,10 +61,12 @@ module.exports = grammar({
     word: $ => $.identifier,
 
     conflicts: $ => [
-        [$.source_item, $.statement],
-        [$.statement, $.statement],
-        [ $.parenthesized_expr, $.list_expr ],
+        [ $.parenthesized_expr, $.list_expr],
         [ $.binary_expr, $.unary_expr ],
+        [ $.source_item, $.repeat_statement],
+        [ $.repeat_statement, $.block_statement],
+        [ $.if_statement, $.repeat_statement],
+        [ $.if_statement],
     ],
 
     // Правила грамматики. Это основная часть, определяющая структуру языка.
@@ -111,12 +113,13 @@ module.exports = grammar({
         // list<item>: (item (',' item)*)?;
         // Общий шаблон для списка элементов, разделенных запятыми.
         // list<arg> для аргументов функции
-        list_arg: $ =>seq(
+        list_arg: $ =>field('elements',
+            seq(
                 $.arg, // Первый элемент
                 repeat( // Повторяющийся паттерн: запятая и следующий элемент
                     seq(',', $.arg)
                 )
-        ),
+        )),
 
         // arg: identifier ('of' typeRef)?;
         // Определение аргумента функции: имя и опциональный тип.
@@ -180,57 +183,54 @@ module.exports = grammar({
         // bool: 'true'|'false';
         bool: $ => choice('true', 'false'), // Булевский литерал
 
-        // statement: { // присваивание через '='
-        // |if: 'if' expr 'then' statement ('else' statement)?;
-        // |loop: ('while'|'until') expr statement* 'end';
-        // |repeat: statement ('while'|'until') expr ';';
-        // |break: 'break' ';';
-        // |expression: expr ';';
-        // |block: ('begin'|'{') (statement|sourceItem)* ('end'|'}');
-        // };
-        // Определение оператора (statement).
+        // statement:
         statement: $ => choice(
+            $.if_statement,
+            $.loop_statement,
+            $.repeat_statement,
+            $.break_statement,
+            $.expression_statement,
+            $.block_statement
+        ),
 
-            // if: 'if' expr 'then' statement ('else' statement)?;
-            seq(
-                'if',
-                field('condition_expr', $.expr),
-                'then',
-                field('condition_body', $.statement),
-                optional(seq(
-                    'else',
-                    field('condition_alternative', $.statement)
-                ))
-            ),
+        // if: 'if' expr 'then' statement ('else' statement)?;
+        if_statement: $ => seq(
+            'if',
+            field('condition', $.expr),
+            'then',
+            field('consequence', $.statement),
+            optional(seq('else', field('alternative', $.statement)))
+        ),
 
-            // loop: ('while'|'until') expr statement* 'end';
-            seq(
-                field('loop_keyword', choice('while', 'until')),
-                field('loop_condition', $.expr),
-                field('loop_body', repeat($.statement)),
-                'end'
-            ),
+        // loop: ('while'|'until') expr statement* 'end';
+        loop_statement: $ => seq(
+            field('keyword', choice('while', 'until')),
+            field('condition', $.expr),
+            field('body', repeat($.statement)),
+            'end'
+        ),
 
-            // repeat: statement ('while'|'until') expr ';';
-            seq(
-                field('repeat_loop_body', $.statement),
-                field('repeat_loop_keyword', choice('while', 'until')),
-                field('repeat_loop_condition', $.expr),
-                ';'
-            ),
+        // repeat: statement ('while'|'until') expr ';';
+        repeat_statement: $ => seq(
+            field('body', $.statement),
+            field('keyword', choice('while', 'until')),
+            field('condition', $.expr),
+            ';'
+        ),
 
-            // break: 'break' ';';
-            seq('break', ';'),
+        // break: 'break' ';';
+        break_statement: $ => seq('break', ';'),
 
-            // expression: expr ';';
-            seq(field('expression', $.expr), ';'),
+        // expression: expr ';';
+        expression_statement: $ => seq(
+            field('expression', $.expr), ';'
+        ),
 
-            // block: ('begin'|'{') (statement|sourceItem)* ('end'|'}');
-            seq(
-                choice('begin', '{'),
-                field('block_body', repeat(choice($.statement, $.source_item))), // Позволяет вложенные определения функций в блоке
-                choice('end','}')
-            )
+        // block: ('begin'|'{') (statement|sourceItem)* ('end'|'}');
+        block_statement: $ => seq(
+            choice('begin', '{'),
+            field('body', repeat(choice($.statement, $.source_item))),
+            choice('end', '}')
         ),
 
         // expr: binary_expr
