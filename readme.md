@@ -6,7 +6,7 @@ npx tree-sitter generate
 
 src- исходники парсера
 
-Конвертировать файл на языке mylang в S-expression формате в файл:
+Конвертировать файл на языке mylang в S-expression формате в файл через стандартный инструмент библиотеки:
 tree-sitter parse input.mylang > ast.sexp
 
 
