@@ -61,12 +61,7 @@ module.exports = grammar({
     word: $ => $.identifier,
 
     conflicts: $ => [
-        [ $.parenthesized_expr, $.list_expr],
-        [ $.binary_expr, $.unary_expr ],
-        [ $.source_item, $.repeat_statement],
-        [ $.repeat_statement, $.block_statement],
-        [ $.if_statement, $.repeat_statement],
-        [ $.if_statement],
+        [ $.parenthesized_expr, $.list_expr]
     ],
 
     // Правила грамматики. Это основная часть, определяющая структуру языка.
@@ -194,13 +189,13 @@ module.exports = grammar({
         ),
 
         // if: 'if' expr 'then' statement ('else' statement)?;
-        if_statement: $ => seq(
+        if_statement: $ => prec.right(seq(
             'if',
             field('condition', $.expr),
             'then',
             field('consequence', $.statement),
             optional(seq('else', field('alternative', $.statement)))
-        ),
+        )),
 
         // loop: ('while'|'until') expr statement* 'end';
         loop_statement: $ => seq(
@@ -211,12 +206,12 @@ module.exports = grammar({
         ),
 
         // repeat: statement ('while'|'until') expr ';';
-        repeat_statement: $ => seq(
+        repeat_statement: $ => prec(1,seq(
             field('body', $.statement),
             field('keyword', choice('while', 'until')),
             field('condition', $.expr),
             ';'
-        ),
+        )),
 
         // break: 'break' ';';
         break_statement: $ => seq('break', ';'),
@@ -296,7 +291,7 @@ module.exports = grammar({
 
         // unary_expr: ('-' | '+' | '!' | '~') expr;
         // Унарные операторы. Правоассоциативны: -!x разбирается как -( !x ).
-        unary_expr: $ => prec.right(1, seq(
+        unary_expr: $ => prec.right(3, seq(
             field('operator', choice('-', '+', '!', '~')),
             field('operand', $.expr)
         )),
