@@ -95,10 +95,10 @@ module.exports = grammar({
             // Ключевое слово 'def' как идентификатор объявления функции
             token('def'),
             // Далее следует сигнатура функции
-            $.func_signature,
+            field('signature', $.func_signature),
 
             // Ноль или более операторов внутри тела функции
-            repeat($.statement),
+            field('body', repeat($.statement)),
 
             // Ключевое слово 'end', закрывающее тело функции
             token('end')
@@ -108,15 +108,15 @@ module.exports = grammar({
         // Сигнатура функции: имя, список аргументов, опционально - тип возвращаемого значения.
         func_signature: $ => seq(
             // Имя функции (идентификатор)
-            $.identifier,
+            field('name', $.identifier),
             // Открывающая скобка
             token('('),
             // Список аргументов, определенный как list<arg>
-            $.list_arg,
+            field('parameters', $.list_arg),
             // Закрывающая скобка
             token(')'),
             // Необязательный тип возвращаемого значения, начинающийся с 'of'
-            optional(seq(token('of'), $.type_ref))
+            optional(seq(token('of'), field('return_type', $.type_ref)))
         ),
 
         // list<item>: (item (',' item)*)?;
@@ -134,9 +134,9 @@ module.exports = grammar({
         // Определение аргумента функции: имя и опциональный тип.
         arg: $ => seq(
             // Имя аргумента (идентификатор)
-            $.identifier,
+            field('name', $.identifier),
             // Необязательная спецификация типа, начинающаяся с 'of'
-            optional(seq(token('of'), $.type_ref))
+            optional(seq(token('of'), field('type', $.type_ref)))
         ),
 
         // typeRef: {
@@ -192,25 +192,28 @@ module.exports = grammar({
             // if: 'if' expr 'then' statement ('else' statement)?;
             seq(
                 token('if'),
-                $.expr,
+                field('condition_expr', $.expr),
                 token('then'),
-                $.statement,
-                optional(seq(token('else'), $.statement))
+                field('condition_body', $.statement),
+                optional(seq(
+                    token('else'),
+                    field('condition_alternative', $.statement)
+                ))
             ),
 
             // loop: ('while'|'until') expr statement* 'end';
             seq(
-                choice(token('while'), token('until')),
-                $.expr,
-                repeat($.statement),
+                field('loop_keyword', choice(token('while'), token('until'))),
+                field('loop_condition', $.expr),
+                field('loop_body', repeat($.statement)),
                 token('end')
             ),
 
             // repeat: statement ('while'|'until') expr ';';
             seq(
-                $.statement,
-                choice(token('while'), token('until')),
-                $.expr,
+                field('repeat_loop_body', $.statement),
+                field('repeat_loop_keyword', choice(token('while'), token('until'))),
+                field('repeat_loop_condition', $.expr),
                 token(';')
             ),
 
@@ -218,12 +221,12 @@ module.exports = grammar({
             seq(token('break'), token(';')),
 
             // expression: expr ';';
-            seq($.expr, token(';')),
+            seq(field('expression', $.expr), token(';')),
 
             // block: ('begin'|'{') (statement|sourceItem)* ('end'|'}');
             seq(
                 choice(token('begin'), token('{')),
-                repeat(choice($.statement, $.source_item)), // Позволяет вложенные определения функций в блоке
+                field('block_body', repeat(choice($.statement, $.source_item))), // Позволяет вложенные определения функций в блоке
                 choice(token('end'), token('}'))
             )
         ),
@@ -342,9 +345,10 @@ module.exports = grammar({
         // range: expr ('..' expr)?;
         // Диапазон для среза массива: expr ('..' expr)? - начальный индекс и опциональный конечный индекс
         range: $ => seq(
-            $.expr, // Начальный индекс
-            optional(seq(token('..'), $.expr)) // Опциональный конечный индекс
+            field('start', $.expr), // Начальный индекс
+            optional(seq(token('..'), field('end', $.expr))) // Опциональный конечный индекс
         ),
+
 
         // literal: bool | str | char | hex | bits | dec;
         // Атомарные значения, не содержащие подвыражений.
