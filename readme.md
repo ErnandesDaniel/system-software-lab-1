@@ -13,12 +13,11 @@ tree-sitter parse input.mylang > ast.sexp
 
 Проверить через gcc --version
 
-Скомпилировать можно через:
-gcc -o main.exe main.c
-
+Скомпилировать в исполняемый можно через:
+gcc -o main main.c
 
 Запустить можно через
-./main.exe input.mylang ast.sexp
+./main input.mylang ast.sexp
 
 
 
