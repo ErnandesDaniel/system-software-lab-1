@@ -25,7 +25,7 @@ char* read_file(const char* filename, long* size) {
 
 int main(int argc, char *argv[]) {
     if (argc != 3) {
-        fprintf(stderr, "Использование: %s <входной_файл> <выходной_json>\n", argv[0]);
+        fprintf(stderr, "Usage: %s <input_file> <output_json>\n", argv[0]);
         return 1;
     }
 
