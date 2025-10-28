@@ -20,7 +20,7 @@ gcc -o main main.c lib/cJSON/cJSON.c
 
 Windows PowerShell:
 
-gcc -std=c17 -Wall -Wextra `
+gcc -std=c17 `
   -Ilib/tree-sitter/lib/include `
 -Ilib/tree-sitter/lib/src `
   -Ilib/cJSON `

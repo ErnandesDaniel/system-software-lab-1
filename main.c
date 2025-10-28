@@ -34,7 +34,6 @@ char* read_file(const char* filename, long* size) {
 cJSON* node_to_json(TSNode node, const char* source) {
     cJSON* obj = cJSON_CreateObject();
 
-    TSSymbol symbol = ts_node_symbol(node);
     const char* type = ts_node_type(node);
     uint32_t start_byte = ts_node_start_byte(node);
     uint32_t end_byte = ts_node_end_byte(node);
