@@ -7,7 +7,7 @@ npx tree-sitter generate
 src- исходники парсера
 
 Конвертировать файл на языке mylang в S-expression формате в файл через стандартный инструмент библиотеки:
-npx tree-sitter parse input.mylang > ast.sexp
+npx tree-sitter parse input.mylang > ast.json
 
 <-------Использование GCC компилятора----------->
 
@@ -31,7 +31,7 @@ lib/tree-sitter/lib/src/lib.c `
 lib/cJSON/cJSON.c
 
 Запустить можно через
-./main input.mylang ast.sexp
+./main input.mylang ast.json
 
 
 <-------Использование CMake системы сборки----------->
@@ -39,4 +39,4 @@ lib/cJSON/cJSON.c
 Скомпилировать в CLion
 
 Далее можно запустить программу:
-./cmake-build-debug/system_software_lab_1 input.mylang ast.sexp
+./cmake-build-debug/system_software_lab_1 input.mylang ast.json

@@ -11,11 +11,11 @@ add_executable(system_software_lab_1
         src/parser.c # сгенерированный для языка mylang парсер
 )
 
-
 # Указываем, где искать заголовки
 target_include_directories(system_software_lab_1 PRIVATE
         lib/tree-sitter/lib/include        # ← здесь лежит api.h библиотеки tree-sitter
         lib/tree-sitter/lib/src            # ← здесь лежат alloc.c, parser.c и т.д. библиотеки tree-sitter
+        #src/tree_sitter/parser.h # ← здесь лежит parser.h скомпилированного parser
 )
 
 
