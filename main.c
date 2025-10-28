@@ -32,7 +32,7 @@ int main(int argc, char *argv[]) {
     long file_size;
     char* content = read_file(argv[1], &file_size);
     if (!content) {
-        perror("Не удалось прочитать входной файл");
+        perror("The input file could not be read");
         return 1;
     }
 
@@ -50,14 +50,14 @@ int main(int argc, char *argv[]) {
     free(content);
 
     if (!json_str) {
-        fprintf(stderr, "Ошибка генерации JSON\n");
+        fprintf(stderr, "JSON generation error\n");
         return 1;
     }
 
     // Записываем в выходной файл
     FILE *out = fopen(argv[2], "w");
     if (!out) {
-        perror("Не удалось создать выходной файл");
+        perror("Failed to create an output file");
         free(json_str);
         return 1;
     }
