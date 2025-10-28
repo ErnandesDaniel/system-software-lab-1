@@ -18,6 +18,18 @@ npx tree-sitter parse input.mylang > ast.sexp
 Скомпилировать в исполняемый можно через:
 gcc -o main main.c lib/cJSON/cJSON.c
 
+Windows PowerShell:
+
+gcc -std=c17 -Wall -Wextra `
+  -Ilib/tree-sitter/lib/include `
+-Ilib/tree-sitter/lib/src `
+  -Ilib/cJSON `
+-o main.exe `
+  main.c `
+lib/tree-sitter/lib/src/lib.c `
+  src/parser.c `
+lib/cJSON/cJSON.c
+
 Запустить можно через
 ./main input.mylang ast.sexp
 
