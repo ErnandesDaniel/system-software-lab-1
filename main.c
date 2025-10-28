@@ -30,6 +30,24 @@ char* read_file(const char* filename, long* size) {
     return buffer;
 }
 
+// Вспомогательная функция: копирует текст и удаляет \r и \n
+char* clean_text(const char* src, size_t len) {
+    if (len == 0) return NULL;
+
+    char* cleaned = malloc(len + 1);
+    if (!cleaned) return NULL;
+
+    size_t j = 0;
+    for (size_t i = 0; i < len; i++) {
+        char c = src[i];
+        if (c != '\r' && c != '\n') {
+            cleaned[j++] = c;
+        }
+    }
+    cleaned[j] = '\0';
+    return cleaned;
+}
+
 // Функция для рекурсивного преобразования узла в JSON
 cJSON* node_to_json(TSNode node, const char* source) {
     cJSON* obj = cJSON_CreateObject();
@@ -39,16 +57,15 @@ cJSON* node_to_json(TSNode node, const char* source) {
     uint32_t end_byte = ts_node_end_byte(node);
 
     cJSON_AddStringToObject(obj, "type", type);
-    cJSON_AddNumberToObject(obj, "start_byte", start_byte);
-    cJSON_AddNumberToObject(obj, "end_byte", end_byte);
 
-    // Добавляем текст узла (опционально, может быть большим)
-    if (end_byte > start_byte && end_byte <= strlen(source)) {
-        char* text = malloc(end_byte - start_byte + 1);
-        memcpy(text, source + start_byte, end_byte - start_byte);
-        text[end_byte - start_byte] = '\0';
-        cJSON_AddStringToObject(obj, "text", text);
-        free(text);
+    // Добавляем очищенный текст узла (без \r и \n)
+    if (end_byte > start_byte) {
+        size_t text_len = end_byte - start_byte;
+        char* cleaned = clean_text(source + start_byte, text_len);
+        if (cleaned) {
+            cJSON_AddStringToObject(obj, "text", cleaned);
+            free(cleaned);
+        }
     }
 
     // Обрабатываем дочерние узлы
@@ -100,16 +117,6 @@ int main(int argc, char *argv[]) {
     ts_tree_delete(tree);
     ts_parser_delete(parser);
     free(content);
-
-    // // Создаём JSON-объект
-    // cJSON *root = cJSON_CreateObject();
-    // cJSON_AddStringToObject(root, "text_content", content);
-    // cJSON_AddNumberToObject(root, "text_length", (double)file_size);
-    //
-    // // Преобразуем в строку
-    // char *json_str = cJSON_Print(root);
-    // cJSON_Delete(root);
-    // free(content);
 
     if (!json_str) {
         fprintf(stderr, "JSON generation error\n");
