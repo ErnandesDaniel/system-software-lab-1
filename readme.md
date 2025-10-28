@@ -33,7 +33,8 @@ lib/cJSON/cJSON.c
 Запустить можно через
 ./main input.mylang ast.sexp
 
-Работа через CMakeLists.txt
+
+<-------Использование CMake системы сборки----------->
 
 Скомпилировать в CLion
 
