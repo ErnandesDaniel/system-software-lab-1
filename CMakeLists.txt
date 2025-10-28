@@ -1,4 +1,17 @@
-cmake_minimum_required(VERSION 3.10)
-project(temp C)
+cmake_minimum_required(VERSION 4.0)
+project(mylang C)
 
-include_directories(src tree-sitter-core)
+set(CMAKE_C_STANDARD 17)
+
+add_executable(system-software-lab-1
+        main.c
+        lib/cJSON/cJSON.c
+)
+
+
+
+
+
+
+
+

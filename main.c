@@ -1,31 +1,69 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include "lib/cJSON/cJSON.h"
+
+// Простая функция для чтения всего файла в строку
+char* read_file(const char* filename, long* size) {
+    FILE* f = fopen(filename, "rb");
+    if (!f) return NULL;
+
+    fseek(f, 0, SEEK_END);
+    *size = ftell(f);
+    fseek(f, 0, SEEK_SET);
+
+    char* buffer = malloc(*size + 1);
+    if (!buffer) {
+        fclose(f);
+        return NULL;
+    }
+
+    fread(buffer, 1, *size, f);
+    buffer[*size] = '\0';
+    fclose(f);
+    return buffer;
+}
 
 int main(int argc, char *argv[]) {
     if (argc != 3) {
-        fprintf(stderr, "Использование: %s <входной_файл> <выходной_файл>\n", argv[0]);
+        fprintf(stderr, "Использование: %s <входной_файл> <выходной_json>\n", argv[0]);
         return 1;
     }
 
-    FILE *input = fopen(argv[1], "r");
-    if (!input) {
-        perror("Ошибка открытия входного файла");
+    long file_size;
+    char* content = read_file(argv[1], &file_size);
+    if (!content) {
+        perror("Не удалось прочитать входной файл");
         return 1;
     }
 
-    FILE *output = fopen(argv[2], "w");
-    if (!output) {
-        perror("Ошибка создания выходного файла");
-        fclose(input);
+    // Создаём JSON-объект
+    cJSON *root = cJSON_CreateObject();
+    cJSON_AddStringToObject(root, "text_content", content);
+    cJSON_AddNumberToObject(root, "text_length", (double)file_size);
+
+    // Можно добавить больше полей по мере анализа
+    // Например: cJSON_AddStringToObject(root, "language", "mylang");
+
+    // Преобразуем в строку
+    char *json_str = cJSON_Print(root);
+    cJSON_Delete(root);
+    free(content);
+
+    if (!json_str) {
+        fprintf(stderr, "Ошибка генерации JSON\n");
         return 1;
     }
 
-    int ch;
-    while ((ch = fgetc(input)) != EOF) {
-        fputc(ch, output);
+    // Записываем в выходной файл
+    FILE *out = fopen(argv[2], "w");
+    if (!out) {
+        perror("Не удалось создать выходной файл");
+        free(json_str);
+        return 1;
     }
+    fputs(json_str, out);
+    fclose(out);
+    free(json_str);
 
-    fclose(input);
-    fclose(output);
     return 0;
 }
