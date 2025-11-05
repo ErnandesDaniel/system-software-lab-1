@@ -51,9 +51,33 @@ void generate_mermaid_node(TSNode node, const char* source, char** diagram, int*
 
     const char* type = ts_node_type(node);
 
+    // Получаем текст узла для идентификаторов и литералов
+    char* text = NULL;
+    if (strcmp(type, "identifier") == 0 ||
+        strcmp(type, "bool") == 0 ||
+        strcmp(type, "str") == 0 ||
+        strcmp(type, "char") == 0 ||
+        strcmp(type, "hex") == 0 ||
+        strcmp(type, "bits") == 0 ||
+        strcmp(type, "dec") == 0) {
+        uint32_t start = ts_node_start_byte(node);
+        uint32_t end = ts_node_end_byte(node);
+        size_t len = end - start;
+        text = malloc(len + 1);
+        if (text) {
+            memcpy(text, source + start, len);
+            text[len] = '\0';
+        }
+    }
+
     // Добавляем узел
     char node_line[256];
-    sprintf(node_line, "%s[\"%s\"]\n", id_str, type);
+    if (text) {
+        sprintf(node_line, "%s[\"%s: %s\"]\n", id_str, type, text);
+        free(text);
+    } else {
+        sprintf(node_line, "%s[\"%s\"]\n", id_str, type);
+    }
     append_to_diagram(diagram, node_line);
 
     // Соединяем с родителем
