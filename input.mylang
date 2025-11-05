@@ -1,8 +1,11 @@
 
 def main ()
 
+while i<5
 
-a=1+4*6+f(x, y, z);
+i=i+1;
+
+end
 
 
 end

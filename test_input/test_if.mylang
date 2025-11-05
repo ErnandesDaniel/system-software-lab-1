@@ -1,7 +1,8 @@
 
 def main ()
 
-if(1<5)
-i=3
+if 5 then
+
+i=1;
 
 end
