@@ -82,9 +82,60 @@ cJSON* node_to_json(TSNode node, const char* source) {
     return obj;
 }
 
+// Вспомогательная функция для добавления строки к диаграмме
+void append_to_diagram(char** diagram, const char* addition) {
+    size_t current_len = *diagram ? strlen(*diagram) : 0;
+    size_t addition_len = strlen(addition);
+    *diagram = realloc(*diagram, current_len + addition_len + 1);
+    if (!*diagram) {
+        fprintf(stderr, "Memory allocation error\n");
+        exit(1);
+    }
+    strcpy(*diagram + current_len, addition);
+}
+
+// Рекурсивная функция для генерации Mermaid диаграммы
+void generate_mermaid_node(TSNode node, const char* source, char** diagram, int* id_counter, const char* parent_id) {
+    int current_id = (*id_counter)++;
+    char id_str[16];
+    sprintf(id_str, "N%d", current_id);
+
+    const char* type = ts_node_type(node);
+
+    // Добавляем узел
+    char node_line[256];
+    sprintf(node_line, "%s[\"%s\"]\n", id_str, type);
+    append_to_diagram(diagram, node_line);
+
+    // Соединяем с родителем
+    if (parent_id) {
+        char edge_line[256];
+        sprintf(edge_line, "%s --> %s\n", parent_id, id_str);
+        append_to_diagram(diagram, edge_line);
+    }
+
+    // Обрабатываем дочерние узлы
+    uint32_t child_count = ts_node_child_count(node);
+    for (uint32_t i = 0; i < child_count; i++) {
+        TSNode child = ts_node_child(node, i);
+        generate_mermaid_node(child, source, diagram, id_counter, id_str);
+    }
+}
+
+// Функция для генерации Mermaid диаграммы
+char* generate_mermaid(TSNode node, const char* source) {
+    char* diagram = NULL;
+    append_to_diagram(&diagram, "graph TD;\n");
+
+    int id_counter = 0;
+    generate_mermaid_node(node, source, &diagram, &id_counter, NULL);
+
+    return diagram;
+}
+
 int main(int argc, char *argv[]) {
-    if (argc != 3) {
-        fprintf(stderr, "Usage: %s <input_file> <output_json>\n", argv[0]);
+    if (argc != 4) {
+        fprintf(stderr, "Usage: %s <input_file> <output_json> <output_md>\n", argv[0]);
         return 1;
     }
 
@@ -114,25 +165,59 @@ int main(int argc, char *argv[]) {
     // Сериализуем в строку
     char *json_str = cJSON_Print(root);
     cJSON_Delete(root);
-    ts_tree_delete(tree);
-    ts_parser_delete(parser);
-    free(content);
 
     if (!json_str) {
         fprintf(stderr, "JSON generation error\n");
+        ts_tree_delete(tree);
+        ts_parser_delete(parser);
+        free(content);
         return 1;
     }
 
-    // Записываем в выходной файл
-    FILE *out = fopen(argv[2], "w");
-    if (!out) {
-        perror("Failed to create an output file");
+    // Записываем JSON в выходной файл
+    FILE *out_json = fopen(argv[2], "w");
+    if (!out_json) {
+        perror("Failed to create JSON output file");
         free(json_str);
+        ts_tree_delete(tree);
+        ts_parser_delete(parser);
+        free(content);
         return 1;
     }
-    fputs(json_str, out);
-    fclose(out);
+    fputs(json_str, out_json);
+    fclose(out_json);
     free(json_str);
+
+    // Генерируем Mermaid диаграмму
+    char *mermaid_str = generate_mermaid(root_node, content);
+
+    if (!mermaid_str) {
+        fprintf(stderr, "Mermaid generation error\n");
+        ts_tree_delete(tree);
+        ts_parser_delete(parser);
+        free(content);
+        return 1;
+    }
+
+    // Создаем MD файл с диаграммой
+    FILE *out_md = fopen(argv[3], "w");
+    if (!out_md) {
+        perror("Failed to create MD output file");
+        free(mermaid_str);
+        ts_tree_delete(tree);
+        ts_parser_delete(parser);
+        free(content);
+        return 1;
+    }
+
+    fputs(mermaid_str, out_md);
+
+    fclose(out_md);
+    free(mermaid_str);
+
+    ts_tree_delete(tree);
+    ts_parser_delete(parser);
+    free(content);
 
     return 0;
 }
