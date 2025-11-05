@@ -1,0 +1,11 @@
+
+def main ()
+
+if(1<5)
+i=3
+
+else
+
+i=5
+
+end
