@@ -124,8 +124,16 @@ int main(int argc, char *argv[]) {
     ts_parser_set_language(parser, tree_sitter_mylang());
 
     TSTree *tree = ts_parser_parse_string(parser, NULL, content, file_size);
-    TSNode root_node = ts_tree_root_node(tree);
 
+    // Проверяем на ошибки разбора
+    TSNode root_node = ts_tree_root_node(tree);
+    if (ts_node_has_error(root_node)) {
+        fprintf(stderr, "Parsing errors occurred\n");
+        ts_tree_delete(tree);
+        ts_parser_delete(parser);
+        free(content);
+        return 1;
+    }
 
     // Генерируем Mermaid диаграмму
     char *mermaid_str = generate_mermaid(root_node, content);
